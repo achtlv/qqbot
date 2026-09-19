@@ -14,8 +14,8 @@ MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3.5-4B")
 QQ_APP_ID = os.environ.get("QQ_APP_ID")
 QQ_APP_SECRET = os.environ.get("QQ_APP_SECRET")
 
-# 保持 20 秒超时，防止 AI 卡死拖垮程序
-ai = OpenAI(api_key=API_KEY, base_url=BASE_URL, timeout=20.0, max_retries=0)
+# 将超时时间放宽到 45 秒，避免免费 API 偶尔排队导致超时
+ai = OpenAI(api_key=API_KEY, base_url=BASE_URL, timeout=45.0, max_retries=1)
 
 # ================= Web 健康检查服务 =================
 app = FastAPI()
@@ -54,7 +54,7 @@ class MyBot(botpy.Client):
             raw_content = resp.choices[0].message.content
 
             if raw_content:
-                answer = raw_content  # 不去换行，保留原始输出
+                answer = raw_content
             else:
                 answer = "AI 这次没有回复内容"
 
@@ -67,7 +67,8 @@ class MyBot(botpy.Client):
 
         try:
             print(f"[{time.strftime('%H:%M:%S')}] 正在发送 QQ 回复...")
-            await message.reply(content=answer, msg_id=message.id, msg_seq=1)
+            # 修复重点：去掉 msg_id=message.id，库会自动处理
+            await message.reply(content=answer, msg_seq=1)
             print(f"[{time.strftime('%H:%M:%S')}] 回复发送完毕。")
         except Exception as reply_err:
             print(f"[{time.strftime('%H:%M:%S')}] 回复消息失败: {reply_err}")
