@@ -1,0 +1,4 @@
+qq-botpy
+openai
+fastapi
+uvicorn[standard]
