@@ -58,8 +58,9 @@ class MyBot(botpy.Client):
         answer = await asyncio.to_thread(get_ai_reply, user_msg)
         print(f"AI 回复: {answer}")
 
-        # 回复私聊消息
-        await message.reply(content=answer, msg_id=message.id, msg_seq=1)
+        # ✅ 修复：去掉 msg_id=message.id，因为底层 SDK 会自动处理，传了会报错。
+        # 只保留 msg_seq=1，这是私聊回复必需的。
+        await message.reply(content=answer, msg_seq=1)
 
     # 2. 监听群聊 @ 消息
     async def on_group_at_message_create(self, message: GroupMessage):
@@ -73,7 +74,7 @@ class MyBot(botpy.Client):
         answer = await asyncio.to_thread(get_ai_reply, user_msg)
         print(f"AI 回复: {answer}")
 
-        # 回复群聊消息（群聊不需要传 msg_id 和 msg_seq）
+        # 群聊回复不需要传 msg_id 和 msg_seq
         await message.reply(content=answer)
 
 # ================= 启动入口 =================
