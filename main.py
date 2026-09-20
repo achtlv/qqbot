@@ -10,8 +10,8 @@ from fastapi import FastAPI
 # ================= 配置区域 =================
 API_KEY = os.environ.get("OPENAI_API_KEY")
 # 使用硅基流动全球节点，解决 Render 海外服务器访问国内节点慢的问题
-BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.siliconflow.com/v1")
-MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen2.5-7B-Instruct")
+BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api-st.siliconflow.cn/v1")
+MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3.5-4B")
 QQ_APP_ID = os.environ.get("QQ_APP_ID")
 QQ_APP_SECRET = os.environ.get("QQ_APP_SECRET")
 TRIGGER_PREFIX = ".ai"
