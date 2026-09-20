@@ -1,4 +1,4 @@
-qq-botpy
+qq-botpy-v2
 openai
 fastapi
 uvicorn[standard]
