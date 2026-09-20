@@ -14,7 +14,8 @@ MODEL_NAME = os.environ.get("MODEL_NAME", "glm-4.7-flash")
 QQ_APP_ID = os.environ.get("QQ_APP_ID")
 QQ_APP_SECRET = os.environ.get("QQ_APP_SECRET")
 
-TRIGGER_PREFIX = "/ai"
+# 群聊触发前缀（已改为 .ai）
+TRIGGER_PREFIX = ".ai"
 
 ai = OpenAI(api_key=API_KEY, base_url=BASE_URL, timeout=45.0, max_retries=1)
 
@@ -49,6 +50,7 @@ def request_ai(user_msg: str) -> str:
 
 # ================= QQ 机器人逻辑 =================
 class MyBot(botpy.Client):
+    # --- 私聊消息处理 ---
     async def on_c2c_message_create(self, message: C2CMessage):
         user_msg = message.content.strip()
         if not user_msg:
@@ -56,26 +58,37 @@ class MyBot(botpy.Client):
         print(f"[{time.strftime('%H:%M:%S')}] 收到私聊消息: {user_msg}")
         start_time = time.time()
         answer = request_ai(user_msg)
-        print(f"[{time.strftime('%H:%M:%S')}] AI 回复耗时: {round(time.time() - start_time, 2)}秒")
+        elapsed = round(time.time() - start_time, 2)
+        print(f"[{time.strftime('%H:%M:%S')}] AI 回复耗时: {elapsed}秒")
         try:
             await message.reply(content=answer, msg_seq=1)
             print(f"[{time.strftime('%H:%M:%S')}] 私聊回复发送完毕。")
         except Exception as reply_err:
             print(f"[{time.strftime('%H:%M:%S')}] 私聊回复失败: {reply_err}")
 
+    # --- 群聊全量消息处理（无需 @ 机器人）---
     async def on_group_message_create(self, message: GroupMessage):
         user_msg = message.content.strip()
+
+        # 检查是否以 .ai 开头（不区分大小写）
         if not user_msg.lower().startswith(TRIGGER_PREFIX):
             print(f"[{time.strftime('%H:%M:%S')}] 群聊消息未匹配前缀，忽略: {user_msg[:30]}...")
             return
+
+        # 去掉前缀，获取实际提问
         actual_question = user_msg[len(TRIGGER_PREFIX):].strip()
         if not actual_question:
-            await message.reply(content="请在 `/ai` 后面跟上你的问题哦~", msg_seq=1)
+            try:
+                await message.reply(content="请在 `.ai` 后面跟上你的问题哦~", msg_seq=1)
+            except Exception as e:
+                print(f"回复空问题失败: {e}")
             return
-        print(f"[{time.strftime('%H:%M:%S')}] 收到群聊 /ai 消息: {actual_question}")
+
+        print(f"[{time.strftime('%H:%M:%S')}] 收到群聊 .ai 消息: {actual_question}")
         start_time = time.time()
         answer = request_ai(actual_question)
-        print(f"[{time.strftime('%H:%M:%S')}] AI 回复耗时: {round(time.time() - start_time, 2)}秒")
+        elapsed = round(time.time() - start_time, 2)
+        print(f"[{time.strftime('%H:%M:%S')}] AI 回复耗时: {elapsed}秒")
         try:
             await message.reply(content=answer, msg_seq=1)
             print(f"[{time.strftime('%H:%M:%S')}] 群聊回复发送完毕。")
@@ -86,6 +99,7 @@ class MyBot(botpy.Client):
 if __name__ == "__main__":
     threading.Thread(target=run_health_server, daemon=True).start()
     print("正在启动 QQ 机器人...")
-    intents = botpy.Intents(public_messages=True, GROUP_AND_C2C_EVENT=True)
+    # 使用 public_messages intent，它已包含群聊和私聊的所有消息事件
+    intents = botpy.Intents(public_messages=True)
     client = MyBot(intents=intents)
     client.run(appid=QQ_APP_ID, secret=QQ_APP_SECRET)
