@@ -8,13 +8,14 @@ from openai import OpenAI
 from fastapi import FastAPI
 
 # ================= 配置区域 =================
+# 从环境变量读取，默认值已改为智谱GLM
 API_KEY = os.environ.get("OPENAI_API_KEY")
-BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://api.siliconflow.cn/v1")
-MODEL_NAME = os.environ.get("MODEL_NAME", "Qwen/Qwen3.5-4B")
+BASE_URL = os.environ.get("OPENAI_BASE_URL", "https://open.bigmodel.cn/api/paas/v4")
+MODEL_NAME = os.environ.get("MODEL_NAME", "glm-4.7-flash")
 QQ_APP_ID = os.environ.get("QQ_APP_ID")
 QQ_APP_SECRET = os.environ.get("QQ_APP_SECRET")
 
-# 将超时时间放宽到 45 秒，避免免费 API 偶尔排队导致超时
+# 智谱GLM的混合思考模型，超时设置45秒
 ai = OpenAI(api_key=API_KEY, base_url=BASE_URL, timeout=45.0, max_retries=1)
 
 # ================= Web 健康检查服务 =================
@@ -44,7 +45,7 @@ class MyBot(botpy.Client):
             resp = ai.chat.completions.create(
                 model=MODEL_NAME,
                 messages=[
-                    {"role": "system", "content": "你是一个 QQ 里的 AI 助手，回复要简洁、有趣、热情。请直接输出内容，不要以空行开头。/no_think"},
+                    {"role": "system", "content": "你是一个 QQ 里的 AI 助手，回复要简洁、有趣、热情。请直接输出内容，不要以空行开头。"},
                     {"role": "user", "content": user_msg}
                 ],
                 max_tokens=500
@@ -67,7 +68,6 @@ class MyBot(botpy.Client):
 
         try:
             print(f"[{time.strftime('%H:%M:%S')}] 正在发送 QQ 回复...")
-            # 修复重点：去掉 msg_id=message.id，库会自动处理
             await message.reply(content=answer, msg_seq=1)
             print(f"[{time.strftime('%H:%M:%S')}] 回复发送完毕。")
         except Exception as reply_err:
